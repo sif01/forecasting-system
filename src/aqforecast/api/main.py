@@ -27,4 +27,3 @@ app = FastAPI(
 async def health() -> dict:  # type: ignore[type-arg]
     """Liveness probe – returns 200 if the process is running."""
     return {"status": "ok"}
-

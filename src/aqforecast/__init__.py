@@ -8,4 +8,3 @@ All configuration lives in configs/config.yaml and params.yaml.
 """
 
 __version__ = "0.1.0"
-

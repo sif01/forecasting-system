@@ -12,4 +12,3 @@ Tests (implemented in Phase 4):
 All tests use FastAPI's TestClient with the real model loader replaced
 by a stub that always returns a fixed prediction value.
 """
-
