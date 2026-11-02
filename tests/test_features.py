@@ -9,3 +9,4 @@ Tests (implemented in Phase 2):
   - Cyclical encodings are in [-1, 1] and have the correct period.
   - Target column equals pm2_5 shifted back by 24 h.
 """
+

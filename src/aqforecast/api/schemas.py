@@ -39,3 +39,4 @@ class PredictResponse(BaseModel):
     forecast_timestamp_utc: str = Field(
         ..., description="ISO-8601 UTC timestamp of the forecasted hour."
     )
+

@@ -38,3 +38,4 @@ services:
     depends_on:
       - prometheus
     # Implemented in Phase 5
+

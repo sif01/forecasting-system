@@ -7,3 +7,4 @@ Tests (implemented in Phase 2):
   - An MLflow run is created with required params and metrics logged.
   - The model is registered in the MLflow registry.
 """
+

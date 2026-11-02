@@ -8,3 +8,4 @@ Tests (implemented in Phase 1):
   - Gaps larger than max_gap_hours raise SchemaError.
   - High null fraction raises SchemaError.
 """
+

@@ -27,3 +27,4 @@ def test_params_loads() -> None:
 
     assert params.xgboost.random_state == 42
     assert 0 < params.split.train_frac < 1
+

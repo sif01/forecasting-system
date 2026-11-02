@@ -30,3 +30,4 @@ xgboost:
 mlflow:
   experiment_name: aq-forecast-bangalore
   registered_model_name: aq-forecast-pm25
+

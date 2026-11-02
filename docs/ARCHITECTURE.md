@@ -23,3 +23,4 @@ Open-Meteo API
 ```
 
 The full Mermaid diagram will be produced in Phase 7 once all components exist.
+

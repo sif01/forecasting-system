@@ -45,3 +45,4 @@ def _load_yaml(path: Path) -> dict[str, Any]:
 # Re-import or call load() explicitly if you need to reload during tests.
 cfg: SimpleNamespace = _dict_to_namespace(_load_yaml(_CONFIG_PATH))
 params: SimpleNamespace = _dict_to_namespace(_load_yaml(_PARAMS_PATH))
+

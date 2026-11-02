@@ -9,3 +9,4 @@ Tests (implemented in Phase 3):
   - Equal within margin: improvement is below threshold → rejected.
   - Rollback: champion alias is repointed to the specified version.
 """
+

@@ -66,3 +66,4 @@ integration and matches the spec requirement.
 **Rationale:** Reproducibility is a core project goal. Unpinned ranges
 (`>=`) allow silent upgrades that break experiments or change metric values.
 Versions will be deliberately updated when needed, not automatically.
+
