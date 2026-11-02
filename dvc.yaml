@@ -1,0 +1,56 @@
+# dvc.yaml – pipeline definition.
+# Stages are filled in phase-by-phase. Skeleton shown here so dvc repro
+# is valid from Phase 0 onward (no-op stages until implemented).
+
+stages:
+  ingest:
+    cmd: python -m aqforecast.ingest
+    deps:
+      - src/aqforecast/ingest.py
+      - configs/config.yaml
+    params:
+      - params.yaml:
+    outs:
+      - data/raw/
+
+  validate:
+    cmd: python -m aqforecast.validate
+    deps:
+      - src/aqforecast/validate.py
+      - configs/config.yaml
+      - data/raw/
+    outs:
+      - data/processed/validated/
+
+  features:
+    cmd: python -m aqforecast.features
+    deps:
+      - src/aqforecast/features.py
+      - configs/config.yaml
+      - data/processed/validated/
+    params:
+      - params.yaml:
+    outs:
+      - data/processed/features/
+
+  train:
+    cmd: python -m aqforecast.train
+    deps:
+      - src/aqforecast/train.py
+      - configs/config.yaml
+      - data/processed/features/
+    params:
+      - params.yaml:
+    metrics:
+      - reports/metrics.json:
+          cache: false
+
+  evaluate:
+    cmd: python -m aqforecast.evaluate
+    deps:
+      - src/aqforecast/evaluate.py
+      - configs/config.yaml
+      - data/processed/features/
+    metrics:
+      - reports/evaluation.json:
+          cache: false

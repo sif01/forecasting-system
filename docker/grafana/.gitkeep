@@ -1,0 +1,2 @@
+# Grafana provisioning – datasources and dashboards are added in Phase 5.
+# This directory is mounted as /etc/grafana/provisioning in the container.

@@ -1,0 +1,18 @@
+# ── Dev / test dependencies (pinned) ───────────────────────────────────────
+# Install alongside requirements.txt:  pip install -r requirements-dev.txt
+
+# Testing
+pytest==8.2.0
+pytest-cov==5.0.0
+pytest-asyncio==0.23.6
+respx==0.21.1          # mock httpx calls in tests
+
+# Linting / formatting / typing
+ruff==0.4.4
+black==24.4.2
+mypy==1.10.0
+
+# Type stubs
+pandas-stubs==2.2.2.240514
+types-requests==2.32.0.20240523
+types-PyYAML==6.0.12.20240311

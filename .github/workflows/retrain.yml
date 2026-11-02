@@ -1,0 +1,18 @@
+name: Daily Retrain
+
+# Runs every day at 20:30 UTC = 02:00 IST
+# Also triggerable manually via workflow_dispatch
+on:
+  schedule:
+    - cron: "30 20 * * *"
+  workflow_dispatch:
+
+# Implemented in Phase 6. Skeleton shown here so the workflow file
+# is valid from Phase 0 onward.
+jobs:
+  retrain:
+    name: Retrain pipeline (Phase 6)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Placeholder – not yet implemented
+        run: echo "Retrain workflow will be implemented in Phase 6."

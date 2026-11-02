@@ -1,0 +1,18 @@
+# Dockerfile.train – Image for running the DVC training pipeline.
+# Implemented in Phase 4. Skeleton shown here for structural completeness.
+
+FROM python:3.11-slim
+WORKDIR /app
+
+RUN pip install --upgrade pip
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY src/ ./src/
+COPY configs/ ./configs/
+COPY params.yaml .
+COPY dvc.yaml .
+
+ENV PYTHONPATH=/app/src
+
+CMD ["dvc", "repro"]

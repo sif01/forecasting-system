@@ -1,0 +1,15 @@
+# .dvcignore – patterns DVC should ignore when hashing deps/outs.
+# Syntax mirrors .gitignore.
+
+# Python bytecode
+__pycache__/
+*.pyc
+
+# Editor artifacts
+.DS_Store
+*.swp
+
+# Test / coverage outputs
+.pytest_cache/
+htmlcov/
+.coverage
