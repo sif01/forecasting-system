@@ -1,0 +1,70 @@
+# location: Bangalore, India
+location:
+  name: Bangalore
+  latitude: 12.9716
+  longitude: 77.5946
+  timezone: Asia/Kolkata
+
+# Open-Meteo API endpoints
+api:
+  air_quality_url: https://air-quality-api.open-meteo.com/v1/air-quality
+  weather_forecast_url: https://api.open-meteo.com/v1/forecast
+  weather_archive_url: https://archive-api.open-meteo.com/v1/archive
+  # seconds before a request is considered failed
+  request_timeout: 30
+  # max retry attempts with exponential backoff
+  max_retries: 3
+
+# Feature configuration
+features:
+  # lag steps in hours
+  lags: [1, 2, 3, 6, 12, 24, 48]
+  # rolling window sizes in hours
+  rolling_windows: [3, 6, 24]
+  # weather columns to include
+  weather_cols:
+    - temperature_2m
+    - relative_humidity_2m
+    - wind_speed_10m
+    - wind_direction_10m
+    - surface_pressure
+    - precipitation
+  # air quality columns (besides pm2_5 target)
+  aq_cols:
+    - pm10
+    - nitrogen_dioxide
+    - ozone
+
+# Forecast horizon (hours ahead)
+horizon: 24
+
+# Data ingestion
+ingestion:
+  # default backfill window in days
+  backfill_days: 180
+  # incremental mode: how many recent days to append
+  incremental_days: 3
+  # max allowed null fraction per column before validation fails
+  max_null_fraction: 0.10
+  # max allowed gap between consecutive hourly timestamps (hours)
+  max_gap_hours: 3
+
+# Validation thresholds
+validation:
+  pm2_5_min: 0.0
+  pm2_5_max: 1000.0   # extreme but sane upper bound for CAMS model output
+
+# Promotion gate
+promotion:
+  # challenger must beat champion MAE by at least this fraction
+  min_improvement_pct: 0.01
+  # evaluation window for champion vs challenger comparison (days)
+  eval_window_days: 7
+
+# Monitoring / drift
+monitoring:
+  # fraction of features showing drift before flagging
+  drift_share_threshold: 0.30
+  # rolling window for live MAE calculation (days)
+  live_mae_window_days: 7
+

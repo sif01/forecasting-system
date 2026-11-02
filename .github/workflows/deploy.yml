@@ -1,0 +1,16 @@
+name: Deploy
+
+# Triggers on merge to main; deploys the API image to the chosen platform.
+# Implemented in Phase 6.
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    name: Build, push, deploy (Phase 6)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Placeholder – not yet implemented
+        run: echo "Deploy workflow will be implemented in Phase 6."
+

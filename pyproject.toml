@@ -1,0 +1,80 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aqforecast"
+version = "0.1.0"
+description = "Daily-retrained air quality forecasting system for Bangalore"
+requires-python = ">=3.11"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+# ---------------------------------------------------------------------------
+# Ruff – fast linter (replaces flake8, isort, pyupgrade, etc.)
+# ---------------------------------------------------------------------------
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "SIM", # flake8-simplify
+]
+ignore = [
+    "E501", # line too long – Black handles this
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["aqforecast"]
+
+# ---------------------------------------------------------------------------
+# Black – opinionated formatter
+# ---------------------------------------------------------------------------
+[tool.black]
+line-length = 88
+target-version = ["py311"]
+
+# ---------------------------------------------------------------------------
+# mypy – lenient type-checking (tightened phase-by-phase)
+# ---------------------------------------------------------------------------
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = false
+warn_unused_configs = true
+ignore_missing_imports = true   # many ML libs lack stubs
+# Start lenient; tighten in later phases
+disallow_untyped_defs = false
+check_untyped_defs = true
+
+# ---------------------------------------------------------------------------
+# pytest
+# ---------------------------------------------------------------------------
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--strict-markers -v"
+markers = [
+    "integration: tests that hit real external APIs (deselect with -m 'not integration')",
+    "slow: tests that take > 5 s",
+]
+
+# ---------------------------------------------------------------------------
+# Coverage
+# ---------------------------------------------------------------------------
+[tool.coverage.run]
+source = ["src/aqforecast"]
+omit = ["tests/*", "*/migrations/*"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+fail_under = 0   # raised to 70 by Phase 7

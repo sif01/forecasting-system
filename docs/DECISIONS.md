@@ -1,0 +1,69 @@
+# Decision Log
+
+This file records non-obvious technical choices made during development,
+following the rule: explain *why*, not just *what*.
+
+---
+
+## 2026-11-02 – Phase 0
+
+### D-001: Open-Meteo CAMS data over ground-station measurements
+
+**Decision:** Use Open-Meteo's air quality API (backed by the Copernicus
+Atmosphere Monitoring Service model) as the primary PM2.5 source rather
+than trying to ingest from ground-station networks (e.g., OpenAQ, CPCB).
+
+**Rationale:**
+- Open-Meteo is free, requires no API key, and provides a stable, consistent
+  REST API with `past_days` support — ideal for automated daily retraining.
+- Ground-station data from CPCB (India's Central Pollution Control Board)
+  requires manual downloads or unstable scraping; OpenAQ coverage for
+  Bangalore is patchy and frequently missing.
+- The trade-off is that CAMS values are *model-based*, not direct measurements.
+  This is prominently documented in the model card (docs/MODEL_CARD.md).
+
+**Implication:** The model predicts CAMS-modelled PM2.5, not sensor PM2.5.
+Comparison with ground truth requires a separate data source (stretch goal).
+
+---
+
+### D-002: Single 24h-ahead target (not multi-horizon)
+
+**Decision:** Predict a single value — PM2.5 at t+24 — rather than a
+full 24-step sequence.
+
+**Rationale:** The spec calls this acceptable for v1. Multi-horizon is a
+stretch goal. A single-output XGBoost model is simpler, faster to iterate,
+and easier to explain. The architecture does not preclude adding horizons later.
+
+---
+
+### D-003: Chronological train/val/test split (no random shuffling)
+
+**Decision:** Time-series data is always split chronologically.
+
+**Rationale:** Random shuffling would leak future information into training
+(the model sees tomorrow's data while "training" on yesterday). This is a
+fundamental MLOps hygiene rule for time-series forecasting, not a tunable.
+
+---
+
+### D-004: MLflow model aliases (`champion` / `challenger`) over deprecated stages
+
+**Decision:** Use the MLflow Model Registry's *alias* feature, not the old
+stage labels (`Staging`, `Production`).
+
+**Rationale:** MLflow deprecated stage-based promotion in v2.x in favour of
+aliases, which are more flexible and explicit. This future-proofs the registry
+integration and matches the spec requirement.
+
+---
+
+### D-005: Pinned dependency versions in requirements.txt
+
+**Decision:** Every package version is pinned to an exact version (`==`).
+
+**Rationale:** Reproducibility is a core project goal. Unpinned ranges
+(`>=`) allow silent upgrades that break experiments or change metric values.
+Versions will be deliberately updated when needed, not automatically.
+
