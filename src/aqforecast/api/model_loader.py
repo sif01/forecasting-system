@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 from datetime import UTC, datetime
+from typing import Any
 
 import mlflow
 import mlflow.pyfunc
@@ -56,10 +57,11 @@ class ModelLoader:
         ).isoformat()
         self._metrics = {key: float(value) for key, value in run.data.metrics.items()}
 
-    def predict(self, features):
-        if not self.is_ready:
+    def predict(self, features: Any) -> float:
+        model = self._model
+        if model is None:
             raise RuntimeError("No champion model is loaded")
-        return float(self._model.predict(features)[0])
+        return float(model.predict(features)[0])
 
 
 model_loader = ModelLoader()

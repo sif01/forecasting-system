@@ -49,14 +49,16 @@ def main() -> None:
         raise RuntimeError("Training did not register a model version")
     latest = max(versions, key=lambda v: int(v.version))
     model = mlflow.sklearn.load_model(f"models:/{model_name}/{latest.version}")
-    result = {"model": evaluate_model(model, df), "baselines": compute_baselines(df)}
+    model_metrics = evaluate_model(model, df)
+    baseline_metrics = compute_baselines(df)
+    result = {"model": model_metrics, "baselines": baseline_metrics}
     run_id = Path("reports/challenger_run_id.txt").read_text(encoding="utf-8").strip()
     with mlflow.start_run(run_id=run_id):
-        mlflow.log_metrics({f"test_{k}": v for k, v in result["model"].items()})
+        mlflow.log_metrics({f"test_{k}": v for k, v in model_metrics.items()})
         mlflow.log_metrics(
             {
                 f"baseline_{name}_{k}": v
-                for name, values in result["baselines"].items()
+                for name, values in baseline_metrics.items()
                 for k, v in values.items()
             }
         )

@@ -130,11 +130,10 @@ def main() -> None:
         )
     else:
         run_id = ""
-    print(
-        json.dumps(promote(run_id), indent=2)
-        if run_id
-        else rollback(args.rollback_version)
-    )
+    if run_id:
+        print(json.dumps(promote(run_id), indent=2))
+    else:
+        rollback(args.rollback_version)
 
 
 if __name__ == "__main__":
