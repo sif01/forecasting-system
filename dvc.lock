@@ -1,0 +1,240 @@
+schema: '2.0'
+stages:
+  ingest:
+    cmd: python -m aqforecast.ingest --mode incremental
+    deps:
+    - path: configs/config.yaml
+      hash: md5
+      md5: fe64f17aeb72f41ad57c2a0f7180e128
+      size: 1969
+    - path: src/aqforecast/ingest.py
+      hash: md5
+      md5: 82f14acd7ec5622ab902e44982f7a996
+      size: 4757
+    params:
+      configs/config.yaml:
+        ingestion.archive_lag_days: 5
+        ingestion.incremental_days: 3
+    outs:
+    - path: data/raw/
+      hash: md5
+      md5: 4560b39ea45cc34338f6fae5e25da044.dir
+      size: 102021
+      nfiles: 1
+  validate:
+    cmd: python -m aqforecast.validate
+    deps:
+    - path: configs/config.yaml
+      hash: md5
+      md5: fe64f17aeb72f41ad57c2a0f7180e128
+      size: 1969
+    - path: data/raw/
+      hash: md5
+      md5: 4560b39ea45cc34338f6fae5e25da044.dir
+      size: 102021
+      nfiles: 1
+    - path: src/aqforecast/validate.py
+      hash: md5
+      md5: 31cc27bbc89088b20b39e8547f456ac5
+      size: 2768
+    outs:
+    - path: data/processed/validated/
+      hash: md5
+      md5: 14cabddbee7802bf9148fadca617156e.dir
+      size: 102021
+      nfiles: 1
+  features:
+    cmd: python -m aqforecast.features
+    deps:
+    - path: configs/config.yaml
+      hash: md5
+      md5: fe64f17aeb72f41ad57c2a0f7180e128
+      size: 1969
+    - path: data/processed/validated/
+      hash: md5
+      md5: 14cabddbee7802bf9148fadca617156e.dir
+      size: 102021
+      nfiles: 1
+    - path: src/aqforecast/features.py
+      hash: md5
+      md5: bd1ae04dd1abd4e0ce9dfa9f43e8fe20
+      size: 2308
+    params:
+      configs/config.yaml:
+        features:
+          lags:
+          - 1
+          - 2
+          - 3
+          - 6
+          - 12
+          - 24
+          - 48
+          rolling_windows:
+          - 3
+          - 6
+          - 24
+          weather_cols:
+          - temperature_2m
+          - relative_humidity_2m
+          - wind_speed_10m
+          - wind_direction_10m
+          - surface_pressure
+          - precipitation
+          aq_cols:
+          - pm10
+          - nitrogen_dioxide
+          - ozone
+        horizon: 24
+    outs:
+    - path: data/processed/features/
+      hash: md5
+      md5: bd6c2f96555e93f1d71c103e383a31cd.dir
+      size: 337067
+      nfiles: 1
+  train:
+    cmd: python -m aqforecast.train
+    deps:
+    - path: configs/config.yaml
+      hash: md5
+      md5: fe64f17aeb72f41ad57c2a0f7180e128
+      size: 1969
+    - path: data/processed/features/
+      hash: md5
+      md5: bd6c2f96555e93f1d71c103e383a31cd.dir
+      size: 337067
+      nfiles: 1
+    - path: src/aqforecast/train.py
+      hash: md5
+      md5: 46c6ea1dfcae43ce722774b0f6f50e24
+      size: 4333
+    params:
+      params.yaml:
+        mlflow:
+          experiment_name: aq-forecast-bangalore
+          registered_model_name: aq-forecast-pm25
+        split:
+          train_frac: 0.7
+          val_frac: 0.15
+        xgboost:
+          n_estimators: 300
+          max_depth: 6
+          learning_rate: 0.05
+          subsample: 0.8
+          colsample_bytree: 0.8
+          min_child_weight: 3
+          gamma: 0.0
+          reg_alpha: 0.1
+          reg_lambda: 1.0
+          random_state: 42
+          n_jobs: -1
+          objective: reg:squarederror
+          eval_metric: mae
+    outs:
+    - path: reports/challenger_run_id.txt
+      hash: md5
+      md5: 641fee25a4b58be03a947f97d9bd414b
+      size: 32
+    - path: reports/metrics.json
+      hash: md5
+      md5: e73277585085974bcfc4d35bef5c21f2
+      size: 122
+  evaluate:
+    cmd: python -m aqforecast.evaluate
+    deps:
+    - path: configs/config.yaml
+      hash: md5
+      md5: fe64f17aeb72f41ad57c2a0f7180e128
+      size: 1969
+    - path: data/processed/features/
+      hash: md5
+      md5: bd6c2f96555e93f1d71c103e383a31cd.dir
+      size: 337067
+      nfiles: 1
+    - path: reports/challenger_run_id.txt
+      hash: md5
+      md5: 641fee25a4b58be03a947f97d9bd414b
+      size: 32
+    - path: src/aqforecast/evaluate.py
+      hash: md5
+      md5: 07eb9ca1ff2a12bfadfd8aa234d1e9bd
+      size: 2634
+    outs:
+    - path: reports/evaluation.json
+      hash: md5
+      md5: 777cb3b1151af4cd0fb6a8c092e8fe47
+      size: 389
+  promote:
+    cmd: python -m aqforecast.promote
+    deps:
+    - path: data/processed/features/features.parquet
+      hash: md5
+      md5: d00e35804264cb2b7420deee4c60efb8
+      size: 337067
+    - path: reports/challenger_run_id.txt
+      hash: md5
+      md5: 641fee25a4b58be03a947f97d9bd414b
+      size: 32
+    - path: reports/evaluation.json
+      hash: md5
+      md5: 777cb3b1151af4cd0fb6a8c092e8fe47
+      size: 389
+    - path: src/aqforecast/promote.py
+      hash: md5
+      md5: 926ba1b0f3031571c10187ed89e3e793
+      size: 5819
+    params:
+      params.yaml:
+        mlflow:
+          experiment_name: aq-forecast-bangalore
+          registered_model_name: aq-forecast-pm25
+      configs/config.yaml:
+        promotion:
+          min_improvement_pct: 0.01
+          eval_window_days: 7
+    outs:
+    - path: reports/promotion_decision.json
+      hash: md5
+      md5: 4d3558f2cb8a525320ae4673a7a1bde1
+      size: 299
+  monitor:
+    cmd: python -m aqforecast.monitor
+    deps:
+    - path: data/processed/features/features.parquet
+      hash: md5
+      md5: d00e35804264cb2b7420deee4c60efb8
+      size: 337067
+    - path: reports/promotion_decision.json
+      hash: md5
+      md5: 4d3558f2cb8a525320ae4673a7a1bde1
+      size: 299
+    - path: src/aqforecast/monitor.py
+      hash: md5
+      md5: aebb1fe4de09def90a95cbaad67cf159
+      size: 4844
+    params:
+      configs/config.yaml:
+        monitoring:
+          drift_share_threshold: 0.3
+          live_mae_window_days: 7
+    outs:
+    - path: reports/data_drift.html
+      hash: md5
+      md5: ef87d3cafeb4b205156d557c5477463b
+      size: 4610790
+    - path: reports/data_drift.json
+      hash: md5
+      md5: 2dfc0c74aff205d3b6bf8d18537de90a
+      size: 166
+    - path: reports/live_metrics.json
+      hash: md5
+      md5: 6b4dc24eddaa497ca3d108d22ae6f161
+      size: 84
+    - path: reports/prediction_drift.html
+      hash: md5
+      md5: e3bd33ac98e406aea2abf9e30a4262f5
+      size: 3467538
+    - path: reports/prediction_drift.json
+      hash: md5
+      md5: fd8530e06643baae1f8002c6602af33e
+      size: 49

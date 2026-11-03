@@ -1,4 +1,24 @@
 services:
+  # ── MLflow tracking server ─────────────────────────────────────────────────
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:latest
+    command: >
+      mlflow server --host 0.0.0.0 --port 5000
+      --backend-store-uri sqlite:////mlflow/mlflow.db
+      --artifacts-destination /mlflow/artifacts
+      --serve-artifacts
+      --allowed-hosts "mlflow:5000,mlflow,localhost:5001,localhost:5000,127.0.0.1:5001,127.0.0.1:5000"
+    ports:
+      - "5001:5000"
+    volumes:
+      - mlflow-data:/mlflow
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://localhost:5000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
   # ── Forecast API ───────────────────────────────────────────────────────────
   api:
     build:
@@ -9,10 +29,15 @@ services:
     env_file:
       - path: .env
         required: false
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
     volumes:
       - ./reports:/app/reports:ro
     depends_on:
-      - prometheus
+      prometheus:
+        condition: service_started
+      mlflow:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
@@ -39,3 +64,5 @@ services:
     depends_on:
       - prometheus
 
+volumes:
+  mlflow-data:

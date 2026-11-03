@@ -86,7 +86,7 @@ def train() -> str:
         )
         run_id = run.info.run_id
         versions = mlflow.search_model_versions(
-            f"name='{load_params()['mlflow']['registered_model_name']}' and run_id='{run_id}'"
+            filter_string=f"name='{load_params()['mlflow']['registered_model_name']}' and run_id='{run_id}'"
         )
         if versions:
             mlflow.MlflowClient().set_registered_model_alias(
