@@ -74,5 +74,14 @@ Download the workflow's reports artifact and inspect `promotion_decision.json` a
 - `RENDER_DEPLOY_HOOK`: deploy hook URL for the configured Render Docker service.
 - `RENDER_URL`: public base URL used by the post-deploy health and forecast checks.
 
+## Setup order
+
+1. Create a DagsHub token and copy the repository's MLflow tracking URI. Add `DAGSHUB_USERNAME`, `DAGSHUB_TOKEN`, and `MLFLOW_TRACKING_URI` as repository Actions secrets. The retraining preflight fails if any of these are missing.
+2. Generate a strong `API_RELOAD_SECRET` and add it as a repository Actions secret. GitHub provides `GITHUB_TOKEN` automatically; do not create it yourself. Enable Actions to create pull requests in **Settings → Actions → General**.
+3. Create the Render Docker web service from `ghcr.io/sif01/forecasting-system:latest`. If the GHCR image is private, configure a Render registry credential with package read access. Set Render's `MLFLOW_TRACKING_URI`, `MLFLOW_TRACKING_USERNAME`, and `MLFLOW_TRACKING_PASSWORD` environment variables. Set Render's `AQ_ADMIN_TOKEN` to exactly the same value as GitHub's `API_RELOAD_SECRET`.
+4. Copy the Render deploy hook and public base URL into GitHub Actions secrets named `RENDER_DEPLOY_HOOK` and `RENDER_URL`. Add the repository Actions variable `DEPLOY_TARGET=render`; the deploy workflow now fails clearly if this is missing or invalid.
+5. For the Cloud Run alternative only, use `GCP_SERVICE_ACCOUNT_KEY` as a GitHub Actions secret and `CLOUD_RUN_SERVICE` plus `CLOUD_RUN_REGION` as Actions variables, then set `DEPLOY_TARGET=cloud-run` instead of `render`.
+6. Run **Actions → Daily Retrain → Run workflow** on `main`. Review the promotion decision and any `No champion yet` warning before expecting the API to serve predictions. A first candidate is promoted only if it beats both configured naive baselines; otherwise retraining remains successful but serving stays unavailable until a champion is promoted.
+
 Set the repository variable `DEPLOY_TARGET` to `render`. In Render, create a Docker web service that uses the GHCR image published by `deploy.yml`, then add `MLFLOW_TRACKING_URI`, `MLFLOW_TRACKING_USERNAME`, `MLFLOW_TRACKING_PASSWORD`, and `AQ_ADMIN_TOKEN` as runtime environment variables. Make the GHCR package readable by the Render service. The deploy workflow is not live until this service, its deploy hook, and its public URL are configured.
 

@@ -36,6 +36,23 @@ def promotion_decision(
     )
 
 
+def champion_status_message(
+    champion_version: str | None,
+    challenger_version: str,
+    promoted: bool,
+    reason: str,
+) -> str:
+    """Explain which model remains available after the promotion decision."""
+    if promoted:
+        return f"Champion model version {challenger_version} is available."
+    if champion_version is not None:
+        return f"Champion model version {champion_version} remains active."
+    return (
+        "No champion yet: the first challenger was not promoted because "
+        f"{reason}. The retrain completed, but serving predictions needs a champion."
+    )
+
+
 def promote(challenger_run_id: str) -> dict:
     """Compare champion and challenger on the same recent feature rows."""
     params = load_params()
@@ -83,6 +100,10 @@ def promote(challenger_run_id: str) -> dict:
         client.set_registered_model_alias(name, "champion", challenger_version)
     decision = {
         "promoted": accepted,
+        "champion_available": champion_version is not None or accepted,
+        "status_message": champion_status_message(
+            champion_version, challenger_version, accepted, reason
+        ),
         "champion_mae": champion_mae,
         "challenger_mae": challenger_mae["mae"],
         "baseline_mae": baseline_mae,
