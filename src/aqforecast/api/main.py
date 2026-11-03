@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import os
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 import numpy as np
@@ -136,9 +136,7 @@ async def predict(request: PredictRequest) -> PredictResponse:
             chunk = series.iloc[-1 - window : -1]
             row[f"pm2_5_mean_{window}"] = float(chunk.mean())
             row[f"pm2_5_std_{window}"] = float(chunk.std())
-        local = datetime.now(timezone.utc).astimezone(
-            ZoneInfo(cfg["location"]["timezone"])
-        )
+        local = datetime.now(UTC).astimezone(ZoneInfo(cfg["location"]["timezone"]))
         row.update(
             hour_sin=float(np.sin(2 * np.pi * local.hour / 24)),
             hour_cos=float(np.cos(2 * np.pi * local.hour / 24)),
@@ -207,7 +205,7 @@ async def predict(request: PredictRequest) -> PredictResponse:
             forecast_pm2_5_24h=value,
             model_version=model_loader.version or "unknown",
             forecast_timestamp_utc=(
-                datetime.now(timezone.utc) + timedelta(hours=24)
+                datetime.now(UTC) + timedelta(hours=24)
             ).isoformat(),
         )
     except HTTPException:

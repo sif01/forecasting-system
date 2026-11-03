@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import argparse
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pandas as pd
@@ -102,7 +102,7 @@ def ingest(
 ) -> Path:
     """Download backfill or recent incremental range and deduplicate persisted rows."""
     cfg = config or load_config()
-    now = end or datetime.now(timezone.utc)
+    now = end or datetime.now(UTC)
     days = (
         cfg["ingestion"]["backfill_days"]
         if mode == "backfill"

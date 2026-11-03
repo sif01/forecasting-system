@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import mlflow
 import mlflow.pyfunc
@@ -52,7 +52,7 @@ class ModelLoader:
         self._version, self._run_id = model_version.version, model_version.run_id
         run = client.get_run(model_version.run_id)
         self._training_date = datetime.fromtimestamp(
-            run.info.start_time / 1000, timezone.utc
+            run.info.start_time / 1000, UTC
         ).isoformat()
         self._metrics = {key: float(value) for key, value in run.data.metrics.items()}
 

@@ -1,6 +1,7 @@
 """Schema and gap validation tests."""
 
 import pandas as pd
+import pandera as pa
 import pytest
 
 from aqforecast.validate import validate_raw
@@ -31,14 +32,14 @@ def test_valid_data_passes():
 def test_out_of_range_target_fails():
     frame = valid_frame()
     frame.loc[0, "pm2_5"] = 2000
-    with pytest.raises(Exception):
+    with pytest.raises(pa.errors.SchemaErrors):
         validate_raw(frame)
 
 
 def test_duplicate_timestamp_fails():
     frame = valid_frame()
     frame.loc[1, "timestamp"] = frame.loc[0, "timestamp"]
-    with pytest.raises(Exception):
+    with pytest.raises(pa.errors.SchemaErrors):
         validate_raw(frame)
 
 

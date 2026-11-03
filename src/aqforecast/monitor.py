@@ -5,10 +5,10 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from evidently.metric_preset import DataDriftPreset
-from evidently.report import Report
 import mlflow.pyfunc
 import pandas as pd
+from evidently.metric_preset import DataDriftPreset
+from evidently.report import Report
 
 from aqforecast.config import load_config, load_params
 
