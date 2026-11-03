@@ -133,7 +133,7 @@ stages:
     outs:
     - path: reports/challenger_run_id.txt
       hash: md5
-      md5: 641fee25a4b58be03a947f97d9bd414b
+      md5: 78b649109a374baa12bc42d571e6c627
       size: 32
     - path: reports/metrics.json
       hash: md5
@@ -153,7 +153,7 @@ stages:
       nfiles: 1
     - path: reports/challenger_run_id.txt
       hash: md5
-      md5: 641fee25a4b58be03a947f97d9bd414b
+      md5: 78b649109a374baa12bc42d571e6c627
       size: 32
     - path: src/aqforecast/evaluate.py
       hash: md5
@@ -173,7 +173,7 @@ stages:
       size: 337067
     - path: reports/challenger_run_id.txt
       hash: md5
-      md5: 641fee25a4b58be03a947f97d9bd414b
+      md5: 78b649109a374baa12bc42d571e6c627
       size: 32
     - path: reports/evaluation.json
       hash: md5
@@ -195,7 +195,7 @@ stages:
     outs:
     - path: reports/promotion_decision.json
       hash: md5
-      md5: 4d3558f2cb8a525320ae4673a7a1bde1
+      md5: b8eed0dce28821eff7c319c653d82d81
       size: 299
   monitor:
     cmd: python -m aqforecast.monitor
@@ -206,7 +206,7 @@ stages:
       size: 337067
     - path: reports/promotion_decision.json
       hash: md5
-      md5: 4d3558f2cb8a525320ae4673a7a1bde1
+      md5: b8eed0dce28821eff7c319c653d82d81
       size: 299
     - path: src/aqforecast/monitor.py
       hash: md5
@@ -220,7 +220,7 @@ stages:
     outs:
     - path: reports/data_drift.html
       hash: md5
-      md5: ef87d3cafeb4b205156d557c5477463b
+      md5: 04c5db8685cbdffd401504de4424a1c7
       size: 4610790
     - path: reports/data_drift.json
       hash: md5
@@ -232,7 +232,7 @@ stages:
       size: 84
     - path: reports/prediction_drift.html
       hash: md5
-      md5: e3bd33ac98e406aea2abf9e30a4262f5
+      md5: 23cb1bb078aef644d046d42a0b5fd525
       size: 3467538
     - path: reports/prediction_drift.json
       hash: md5
