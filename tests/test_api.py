@@ -64,3 +64,60 @@ def test_metrics_and_invalid_observations(monkeypatch):
         client.post("/predict", json={"recent_observations": [-1] * 169}).status_code
         == 422
     )
+
+
+def test_model_info_and_authenticated_reload(monkeypatch):
+    client = TestClient(app)
+    monkeypatch.setattr(model_loader, "_version", "3")
+    monkeypatch.setattr(model_loader, "_model", object())
+    assert client.get("/model-info").json()["version"] == "3"
+
+    monkeypatch.setenv("AQ_ADMIN_TOKEN", "test-secret")
+    monkeypatch.setattr(model_loader, "load", Mock())
+    assert client.post("/admin/reload").status_code == 401
+    response = client.post("/admin/reload", headers={"X-Admin-Token": "test-secret"})
+    assert response.status_code == 200
+    assert response.json()["status"] == "reloaded"
+
+
+def test_reload_reports_model_load_failure(monkeypatch):
+    client = TestClient(app)
+    monkeypatch.setenv("AQ_ADMIN_TOKEN", "test-secret")
+    monkeypatch.setattr(model_loader, "load", Mock(side_effect=RuntimeError("offline")))
+
+    response = client.post("/admin/reload", headers={"X-Admin-Token": "test-secret"})
+
+    assert response.status_code == 503
+    assert "offline" in response.json()["detail"]
+
+
+def test_predict_requires_loaded_model_and_maps_source_errors(monkeypatch):
+    client = TestClient(app)
+    monkeypatch.setattr(model_loader, "_model", None)
+    assert (
+        client.post("/predict", json={"recent_observations": [10.0] * 169}).status_code
+        == 503
+    )
+
+    monkeypatch.setattr(model_loader, "_model", object())
+    monkeypatch.setattr(
+        "requests.get", Mock(side_effect=RuntimeError("source offline"))
+    )
+    response = client.post("/predict", json={})
+    assert response.status_code == 502
+    assert "source offline" in response.json()["detail"]
+
+
+def test_metrics_loads_live_monitoring_gauges(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    reports = tmp_path / "reports"
+    reports.mkdir()
+    (reports / "live_metrics.json").write_text(
+        '{"live_mae": 4.2, "drift_share": 0.5}', encoding="utf-8"
+    )
+
+    response = TestClient(app).get("/metrics")
+
+    assert response.status_code == 200
+    assert "aq_live_mae 4.2" in response.text
+    assert "aq_drift_share 0.5" in response.text
