@@ -78,4 +78,4 @@ omit = ["tests/*", "*/migrations/*"]
 [tool.coverage.report]
 show_missing = true
 skip_covered = false
-fail_under = 0   # raised to 70 by Phase 7
+fail_under = 70
