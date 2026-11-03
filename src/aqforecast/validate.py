@@ -48,9 +48,14 @@ def validate_raw(df: pd.DataFrame, config: dict | None = None) -> None:
     validated = schema(cfg).validate(df, lazy=True)
     timestamps = validated["timestamp"].sort_values()
     gap_limit = pd.Timedelta(hours=cfg["ingestion"]["max_gap_hours"])
-    max_gap = timestamps.diff().max()
-    if pd.notna(max_gap) and pd.Timedelta(max_gap) > gap_limit:
-        raise ValueError(f"timestamp gap exceeds configured maximum of {gap_limit}")
+    if not timestamps.empty:
+        previous = timestamps.iloc[0]
+        for current in timestamps.iloc[1:]:
+            if current - previous > gap_limit:
+                raise ValueError(
+                    f"timestamp gap exceeds configured maximum of {gap_limit}"
+                )
+            previous = current
 
 
 def main() -> None:
