@@ -15,6 +15,14 @@ jobs:
     outputs:
       image: ${{ steps.image.outputs.name }}
     steps:
+      - name: Validate deployment target
+        env:
+          DEPLOY_TARGET: ${{ vars.DEPLOY_TARGET }}
+        run: |
+          if [[ "$DEPLOY_TARGET" != "render" && "$DEPLOY_TARGET" != "cloud-run" ]]; then
+            echo "::error title=Invalid deployment target::Set the repository variable DEPLOY_TARGET to exactly 'render' or 'cloud-run'."
+            exit 1
+          fi
       - uses: actions/checkout@v4
       - name: Set image name
         id: image
@@ -47,7 +55,23 @@ jobs:
             sleep 10
           done
           curl --fail "$RENDER_URL/health"
-          curl --fail -X POST "$RENDER_URL/predict" -H 'Content-Type: application/json' -d '{}'
+          status=$(curl --silent --show-error --output predict-response.json --write-out '%{http_code}' \
+            -X POST "$RENDER_URL/predict" -H 'Content-Type: application/json' -d '{}')
+          if [[ "$status" == "503" ]]; then
+            if grep -q "Champion model is not loaded" predict-response.json; then
+              echo "::error title=No champion model::Render returned 503 because no champion model is loaded. Check the first retrain promotion decision and confirm MLflow has a champion alias."
+            else
+              echo "::error title=Render API unavailable::POST /predict returned HTTP 503. Inspect the response and Render service logs."
+            fi
+            cat predict-response.json
+            exit 1
+          fi
+          if [[ "$status" != "200" ]]; then
+            echo "::error title=Render prediction smoke test failed::POST /predict returned HTTP $status."
+            cat predict-response.json
+            exit 1
+          fi
+          cat predict-response.json
         env:
           RENDER_URL: ${{ secrets.RENDER_URL }}
 
