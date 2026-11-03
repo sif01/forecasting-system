@@ -68,9 +68,7 @@ def test_malformed_payload_fails_clearly():
         fetch_range("2025-01-01", "2025-01-01")
 
 
-def test_incremental_ingest_backfills_when_raw_data_is_missing(
-    tmp_path, monkeypatch
-):
+def test_incremental_ingest_backfills_when_raw_data_is_missing(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     config = {
         "ingestion": {
@@ -85,7 +83,5 @@ def test_incremental_ingest_backfills_when_raw_data_is_missing(
     ingest("incremental", config=config, end=datetime(2025, 12, 1, tzinfo=UTC))
 
     start, finish, _ = fetch.call_args.args
-    elapsed_days = (
-        datetime.fromisoformat(finish) - datetime.fromisoformat(start)
-    ).days
+    elapsed_days = (datetime.fromisoformat(finish) - datetime.fromisoformat(start)).days
     assert elapsed_days == 180
