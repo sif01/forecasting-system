@@ -59,7 +59,7 @@ def promote(challenger_run_id: str) -> dict:
     name = params["mlflow"]["registered_model_name"]
     client = mlflow.tracking.MlflowClient()
     challenger_versions = client.search_model_versions(
-        f"name='{name}' and run_id='{challenger_run_id}'"
+        filter_string=f"name='{name}' and run_id='{challenger_run_id}'"
     )
     if not challenger_versions:
         raise ValueError(f"No registered model found for run {challenger_run_id}")
@@ -78,7 +78,7 @@ def promote(challenger_run_id: str) -> dict:
     challenger_mae = _metrics(actual, challenger.predict(recent[columns]))
     champion_mae = None
     champion_version = None
-    for version in client.search_model_versions(f"name='{name}'"):
+    for version in client.search_model_versions(filter_string=f"name='{name}'"):
         if "champion" in (version.aliases or []):
             champion_version = version.version
             break

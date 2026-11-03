@@ -44,7 +44,7 @@ def main() -> None:
     df = pd.read_parquet("data/processed/features/features.parquet")
     params = load_params()
     model_name = params["mlflow"]["registered_model_name"]
-    versions = mlflow.search_model_versions(f"name='{model_name}'")
+    versions = mlflow.search_model_versions(filter_string=f"name='{model_name}'")
     if not versions:
         raise RuntimeError("Training did not register a model version")
     latest = max(versions, key=lambda v: int(v.version))
