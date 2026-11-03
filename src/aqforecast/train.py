@@ -79,21 +79,13 @@ def train() -> str:
             "data_sha256", hashlib.sha256(data_path.read_bytes()).hexdigest()
         )
         mlflow.log_param("feature_columns", json.dumps(columns))
-        mlflow.sklearn.log_model(
-            model,
-            "model",
-            registered_model_name=load_params()["mlflow"]["registered_model_name"],
-        )
+        mlflow.sklearn.log_model(model, "model")
         run_id = run.info.run_id
-        versions = mlflow.search_model_versions(
-            f"name='{load_params()['mlflow']['registered_model_name']}' and run_id='{run_id}'"
+        model_name = load_params()["mlflow"]["registered_model_name"]
+        model_version = mlflow.register_model(f"runs:/{run_id}/model", model_name)
+        mlflow.MlflowClient().set_registered_model_alias(
+            model_name, "challenger", model_version.version
         )
-        if versions:
-            mlflow.MlflowClient().set_registered_model_alias(
-                load_params()["mlflow"]["registered_model_name"],
-                "challenger",
-                max(versions, key=lambda v: int(v.version)).version,
-            )
         fig, axis = plt.subplots(figsize=(9, 6))
         importance = (
             pd.Series(model.feature_importances_, index=columns).sort_values().tail(20)

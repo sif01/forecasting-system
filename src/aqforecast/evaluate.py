@@ -44,11 +44,10 @@ def main() -> None:
     df = pd.read_parquet("data/processed/features/features.parquet")
     params = load_params()
     model_name = params["mlflow"]["registered_model_name"]
-    versions = mlflow.search_model_versions(f"name='{model_name}'")
-    if not versions:
-        raise RuntimeError("Training did not register a model version")
-    latest = max(versions, key=lambda v: int(v.version))
-    model = mlflow.sklearn.load_model(f"models:/{model_name}/{latest.version}")
+    challenger = mlflow.MlflowClient().get_model_version_by_alias(
+        model_name, "challenger"
+    )
+    model = mlflow.sklearn.load_model(f"models:/{model_name}/{challenger.version}")
     model_metrics = evaluate_model(model, df)
     baseline_metrics = compute_baselines(df)
     result = {"model": model_metrics, "baselines": baseline_metrics}

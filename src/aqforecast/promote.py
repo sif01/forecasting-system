@@ -36,17 +36,30 @@ def promotion_decision(
     )
 
 
+def _get_champion_version(client, model_name: str) -> str | None:
+    """Return no version only when the registry confirms no champion alias exists."""
+    try:
+        return client.get_model_version_by_alias(model_name, "champion").version
+    except mlflow.exceptions.MlflowException as exc:
+        if exc.error_code != "RESOURCE_DOES_NOT_EXIST":
+            raise
+        return None
+
+
+def _get_challenger_version(client, model_name: str, run_id: str) -> str:
+    """Use the challenger alias only when it belongs to the current training run."""
+    challenger = client.get_model_version_by_alias(model_name, "challenger")
+    if challenger.run_id != run_id:
+        raise ValueError(f"No registered model found for run {run_id}")
+    return challenger.version
+
+
 def promote(challenger_run_id: str) -> dict:
     """Compare champion and challenger on the same recent feature rows."""
     params = load_params()
     name = params["mlflow"]["registered_model_name"]
     client = mlflow.tracking.MlflowClient()
-    challenger_versions = client.search_model_versions(
-        f"name='{name}' and run_id='{challenger_run_id}'"
-    )
-    if not challenger_versions:
-        raise ValueError(f"No registered model found for run {challenger_run_id}")
-    challenger_version = max(challenger_versions, key=lambda v: int(v.version)).version
+    challenger_version = _get_challenger_version(client, name, challenger_run_id)
     df = pd.read_parquet("data/processed/features/features.parquet")
     days = load_config()["promotion"]["eval_window_days"]
     recent = df[
@@ -60,11 +73,7 @@ def promote(challenger_run_id: str) -> dict:
     actual = recent["target_pm2_5_24h"].to_numpy()
     challenger_mae = _metrics(actual, challenger.predict(recent[columns]))
     champion_mae = None
-    champion_version = None
-    for version in client.search_model_versions(f"name='{name}'"):
-        if "champion" in (version.aliases or []):
-            champion_version = version.version
-            break
+    champion_version = _get_champion_version(client, name)
     if champion_version:
         champion = mlflow.sklearn.load_model(f"models:/{name}/{champion_version}")
         champion_mae = _metrics(actual, champion.predict(recent[columns]))["mae"]

@@ -52,7 +52,9 @@ def test_main_logs_model_and_baselines(tmp_path, monkeypatch):
     frame = _features()
     model = Mock()
     model.predict.return_value = frame.iloc[85:]["target_pm2_5_24h"].to_numpy()
-    client_run = SimpleNamespace(version="2")
+    client_version = SimpleNamespace(version="2")
+    client = Mock()
+    client.get_model_version_by_alias.return_value = client_version
     monkeypatch.setattr(evaluate_module.pd, "read_parquet", lambda _: frame)
     monkeypatch.setattr(
         evaluate_module,
@@ -62,9 +64,7 @@ def test_main_logs_model_and_baselines(tmp_path, monkeypatch):
             "mlflow": {"registered_model_name": "aqforecast"},
         },
     )
-    monkeypatch.setattr(
-        evaluate_module.mlflow, "search_model_versions", lambda _: [client_run]
-    )
+    monkeypatch.setattr(evaluate_module.mlflow, "MlflowClient", lambda: client)
     monkeypatch.setattr(evaluate_module.mlflow.sklearn, "load_model", lambda _: model)
     monkeypatch.setattr(evaluate_module.mlflow, "start_run", lambda **_: nullcontext())
     monkeypatch.setattr(evaluate_module.mlflow, "log_metrics", Mock())
@@ -74,3 +74,6 @@ def test_main_logs_model_and_baselines(tmp_path, monkeypatch):
     result = json.loads((tmp_path / "reports" / "evaluation.json").read_text())
     assert result["model"]["mae"] == 0
     assert set(result["baselines"]) == {"persistence", "seasonal_naive"}
+    client.get_model_version_by_alias.assert_called_once_with(
+        "aqforecast", "challenger"
+    )
