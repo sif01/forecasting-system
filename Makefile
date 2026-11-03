@@ -25,6 +25,7 @@ test-integration:
 # ── Pipeline steps (wrappers around dvc / python -m) ───────────────────────
 ingest:
 	python -m aqforecast.ingest
+	python -m aqforecast.validate
 
 train:
 	dvc repro

@@ -67,3 +67,25 @@ integration and matches the spec requirement.
 (`>=`) allow silent upgrades that break experiments or change metric values.
 Versions will be deliberately updated when needed, not automatically.
 
+---
+
+## 2026-11-03 – Pipeline implementation
+
+### D-006: Chunk long air-quality backfills
+
+**Decision:** Split requests into 90-day windows and join each with the corresponding weather archive interval.
+
+**Rationale:** Open-Meteo's Air Quality API limits `past_days` to 92, while the project backfill default is 180 days. Keeping each request below that limit avoids silently requesting unsupported history.
+
+### D-007: Keep the latest PM2.5 value and prior-week value as explicit baseline features
+
+**Decision:** Store `pm2_5_current` and `pm2_5_lag_144` in the feature frame for baseline scoring.
+
+**Rationale:** The persistence baseline needs the observed value at forecast time. For a t+24 target, weekly seasonal-naive needs the same-hour observation seven days before that target, which is t-144. Both are valid historical covariates and do not expose the future target.
+
+### D-008: DagsHub object storage credentials remain local
+
+**Decision:** Track only the DVC S3-compatible endpoint in `.dvc/config`; supply access and secret keys through local DVC config or CI secrets.
+
+**Rationale:** DagsHub's DVC integration uses an S3-compatible endpoint, and credentials must not be committed.
+

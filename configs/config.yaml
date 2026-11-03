@@ -48,6 +48,8 @@ ingestion:
   max_null_fraction: 0.10
   # max allowed gap between consecutive hourly timestamps (hours)
   max_gap_hours: 3
+  # Historical API may lag by several days; request enough days for archive stability.
+  archive_lag_days: 5
 
 # Validation thresholds
 validation:

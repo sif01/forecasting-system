@@ -1,0 +1,6 @@
+[core]
+    remote = origin
+    analytics = false
+[remote "origin"]
+    url = s3://dvc
+    endpointurl = https://dagshub.com/sif01/forecasting-system.s3

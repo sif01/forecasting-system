@@ -1,53 +1,25 @@
-# Model Card – AQ Forecast PM2.5 (Bangalore)
-
-> Full content will be written in Phase 7 once final metrics are available.
-> Skeleton shown here to establish the structure.
-
-## Model details
-
-- **Model type:** XGBoost regressor
-- **Task:** Forecast hourly PM2.5 (µg/m³) 24 hours ahead for Bangalore, India
-- **Version:** See MLflow registry for current champion version
-- **Developed by:** (your name / org)
+# Model card: Bangalore PM2.5 forecast
 
 ## Intended use
 
-- **Primary use:** Operational daily air quality forecast for Bangalore
-- **Out-of-scope:** Other cities, other pollutants without re-training
+Forecast hourly PM2.5 concentration 24 hours ahead for Bangalore, India, as an educational forecasting and MLOps demonstration. It is not designed for personal health decisions, regulatory reporting, or emergency response.
 
-## Data
+## Data and method
 
-- **Source:** Open-Meteo air quality API (CAMS model output) + Open-Meteo weather
-- **⚠️ Important caveat:** PM2.5 values from Open-Meteo are **model-based
-  (CAMS/Copernicus)**, not ground-station measurements. They represent an
-  atmospheric model's estimate, not a direct sensor reading. Comparisons
-  with CPCB ground-station data will show systematic biases.
-- **Location:** Bangalore (lat 12.9716, lon 77.5946)
-- **Temporal coverage:** Backfilled 180 days; updated daily
+Air quality is sourced from Open-Meteo's Air Quality API and weather from its Historical Weather API. The PM2.5 values are CAMS model-based estimates, not ground-station measurements. Features use recent PM2.5 history, weather covariates, rolling statistics, and cyclical local time. XGBoost is evaluated on chronological data splits against persistence and weekly seasonal-naive baselines. See configuration for the exact features and promotion threshold.
 
 ## Metrics
 
-*To be filled in Phase 7 with final test-set numbers.*
-
-| Metric | XGBoost | Persistence baseline | Seasonal-naive baseline |
-|---|---|---|---|
-| MAE (µg/m³) | TBD | TBD | TBD |
-| RMSE (µg/m³) | TBD | TBD | TBD |
-| sMAPE (%) | TBD | TBD | TBD |
+MAE is the primary metric; RMSE and sMAPE are also logged. Current run-specific results are stored under `reports/` and in MLflow. There are no verified production metrics until the pipeline has been run on the target DagsHub tracking server.
 
 ## Known limitations and failure modes
 
-- **Monsoon season (June–September):** Rainfall-driven PM2.5 drops may be
-  poorly captured if the CAMS model underestimates washout.
-- **Festival spikes (Diwali, Ugadi):** Firework-related PM2.5 spikes are not
-  predicted by weather/AQ lag features alone; expect under-prediction.
-- **Sensor outages:** Open-Meteo API outages cause gaps; the pipeline uses
-  exponential back-off and alerts on validation failure.
+- CAMS estimates can differ from local sensor readings and may smooth local events.
+- Monsoon conditions, festival-season firecrackers, construction, traffic changes, and abrupt weather shifts can cause spikes the model has not learned.
+- A 24-hour single-step forecast does not describe uncertainty or intermediate hourly values.
+- Historical weather reanalysis is not identical to weather forecasts available at prediction time, creating a potential training-serving mismatch.
+- Missing API coverage, stale data, or insufficient history should stop prediction rather than be silently imputed.
 
 ## Ethical notes
 
-- This is an environmental forecasting tool. Predictions carry uncertainty;
-  they should not be the sole basis for health or policy decisions.
-- Model-based CAMS data should not be used as a substitute for regulatory
-  air quality monitoring.
-
+Air-quality forecasts can affect health choices. Users should consult official local monitoring and public-health guidance. The API must not be represented as authoritative measurement or medical advice. Data source attribution to Open-Meteo and CAMS is required.
