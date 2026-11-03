@@ -63,7 +63,7 @@ def test_main_logs_model_and_baselines(tmp_path, monkeypatch):
         },
     )
     monkeypatch.setattr(
-        evaluate_module.mlflow, "search_model_versions", lambda _: [client_run]
+        evaluate_module.mlflow, "search_model_versions", lambda **_: [client_run]
     )
     monkeypatch.setattr(evaluate_module.mlflow.sklearn, "load_model", lambda _: model)
     monkeypatch.setattr(evaluate_module.mlflow, "start_run", lambda **_: nullcontext())
