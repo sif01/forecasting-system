@@ -89,3 +89,13 @@ Versions will be deliberately updated when needed, not automatically.
 
 **Rationale:** DagsHub's DVC integration uses an S3-compatible endpoint, and credentials must not be committed.
 
+---
+
+### D-009: Bootstrap missing DVC history during incremental retraining
+
+**Decision:** When incremental ingestion finds no raw Parquet files, it uses the configured backfill window. The scheduled workflow skips `dvc pull` only when no `dvc.lock` exists and installs the project package before running DVC stages.
+
+**Rationale:** A new repository has no versioned dataset to pull, and feature generation needs more than the three-day incremental window. DVC stage commands also import `aqforecast` directly, so the package must be installed in the workflow environment.
+
+**Implication:** The first workflow run can initialize the historical dataset and pipeline lock; later runs pull the DVC-tracked data and append recent observations.
+

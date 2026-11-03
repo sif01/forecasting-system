@@ -50,7 +50,17 @@ def main() -> None:
         )
     summary = generate_drift_report(reference, current)
     name = load_params()["mlflow"]["registered_model_name"]
-    model = mlflow.pyfunc.load_model(f"models:/{name}@champion")
+    client = mlflow.tracking.MlflowClient()
+    try:
+        client.get_model_version_by_alias(name, "champion")
+        model = mlflow.pyfunc.load_model(f"models:/{name}@champion")
+    except mlflow.exceptions.MlflowException:
+        # A first candidate can fail the promotion gate; still report candidate drift.
+        decision = json.loads(
+            Path("reports/promotion_decision.json").read_text(encoding="utf-8")
+        )
+        version = decision["challenger_version"]
+        model = mlflow.pyfunc.load_model(f"models:/{name}/{version}")
     feature_cols = [
         c for c in current.columns if c not in {"target_pm2_5_24h", "timestamp"}
     ]

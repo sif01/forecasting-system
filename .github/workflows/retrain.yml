@@ -30,7 +30,9 @@ jobs:
           python-version: "3.11"
           cache: pip
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: |
+          pip install -r requirements.txt
+          pip install -e .
       - name: Configure DagsHub DVC credentials
         run: |
           dvc remote modify origin --local access_key_id "$DAGSHUB_TOKEN"
@@ -41,7 +43,12 @@ jobs:
           key: dvc-${{ runner.os }}-${{ github.ref }}
           restore-keys: dvc-${{ runner.os }}-
       - name: Pull versioned data
-        run: dvc pull
+        run: |
+          if [ -f dvc.lock ]; then
+            dvc pull
+          else
+            echo "No DVC lock exists yet; the first historical backfill will initialize the pipeline data."
+          fi
       - name: Run complete pipeline
         run: dvc repro
       - name: Push versioned data
