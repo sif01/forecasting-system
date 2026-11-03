@@ -41,6 +41,16 @@ def _load_yaml(path: Path) -> dict[str, Any]:
         return yaml.safe_load(fh) or {}
 
 
+def load_config() -> dict[str, Any]:
+    """Return the project YAML settings as a plain dictionary."""
+    return _load_yaml(_CONFIG_PATH)
+
+
+def load_params() -> dict[str, Any]:
+    """Return reproducible model and pipeline parameters as a dictionary."""
+    return _load_yaml(_PARAMS_PATH)
+
+
 # Eagerly load at import time so downstream modules get a simple object.
 # Re-import or call load() explicitly if you need to reload during tests.
 cfg: SimpleNamespace = _dict_to_namespace(_load_yaml(_CONFIG_PATH))

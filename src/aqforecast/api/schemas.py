@@ -7,6 +7,8 @@ auto-generated OpenAPI docs (FastAPI /docs) are self-explanatory.
 Implemented in Phase 4.
 """
 
+from typing import Annotated
+
 from pydantic import BaseModel, Field
 
 
@@ -23,8 +25,9 @@ class PredictRequest(BaseModel):
     or leave it empty and the API will fetch the latest data from Open-Meteo.
     """
 
-    recent_observations: list[float] | None = Field(
+    recent_observations: list[Annotated[float, Field(ge=0, le=1000)]] | None = Field(
         default=None,
+        min_length=169,
         description="Optional list of recent hourly PM2.5 readings (most recent last).",
     )
 

@@ -1,7 +1,6 @@
 # Air Quality Forecasting System – Bangalore PM2.5
 
-<!-- CI badge will be added after the first PR is merged -->
-<!-- ![CI](https://github.com/<owner>/<repo>/actions/workflows/ci.yml/badge.svg) -->
+![CI](https://github.com/sif01/forecasting-system/actions/workflows/ci.yml/badge.svg)
 
 An end-to-end MLOps pipeline that **forecasts Bangalore's PM2.5 for the next
 24 hours**, retrains automatically every day, validates new models against a
@@ -56,6 +55,10 @@ make install
 ```bash
 cp .env.example .env
 # Edit .env with your DagsHub username, token, and MLflow tracking URI
+
+# Configure DagsHub object storage credentials locally; these stay out of Git.
+dvc remote modify origin --local access_key_id "$DAGSHUB_TOKEN"
+dvc remote modify origin --local secret_access_key "$DAGSHUB_TOKEN"
 ```
 
 ### 3 – Run the pipeline
@@ -65,6 +68,8 @@ cp .env.example .env
 make ingest
 make train
 ```
+
+`make ingest` backfills data and validates it. `make train` runs `dvc repro`, including incremental ingestion, validation, feature creation, training, baseline evaluation, promotion, and drift reports. The first MLflow run uses the local MLflow store unless `MLFLOW_TRACKING_URI` is set.
 
 ### 4 – Start the API and observability stack
 
@@ -96,7 +101,9 @@ Configure these in **Settings → Secrets and variables → Actions**:
 | `MLFLOW_TRACKING_URI` | `https://dagshub.com/<user>/<repo>.mlflow` |
 | `API_RELOAD_SECRET` | Random string for `POST /admin/reload` |
 
-*(Deployment secrets added in Phase 6)*
+For the scheduled retraining workflow, DVC uses the DagsHub token as both its S3-compatible access and secret key. Set the repository variable `DEPLOY_TARGET` to `render` or `cloud-run` for deployment. Render additionally needs `RENDER_DEPLOY_HOOK` and `RENDER_URL` secrets. Cloud Run needs `GCP_SERVICE_ACCOUNT_KEY`, and the variables `CLOUD_RUN_SERVICE` and `CLOUD_RUN_REGION`.
+
+The deployment workflow builds and publishes `ghcr.io/sif01/forecasting-system:latest`. Configure the selected hosting service to use this image and provide the MLflow tracking and DagsHub credentials as runtime environment variables.
 
 ---
 

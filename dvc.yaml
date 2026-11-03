@@ -4,12 +4,14 @@
 
 stages:
   ingest:
-    cmd: python -m aqforecast.ingest
+    cmd: python -m aqforecast.ingest --mode incremental
     deps:
       - src/aqforecast/ingest.py
       - configs/config.yaml
     params:
-      - params.yaml:
+      - configs/config.yaml:
+          - ingestion.incremental_days
+          - ingestion.archive_lag_days
     outs:
       - data/raw/
 
@@ -29,7 +31,9 @@ stages:
       - configs/config.yaml
       - data/processed/validated/
     params:
-      - params.yaml:
+      - configs/config.yaml:
+          - features
+          - horizon
     outs:
       - data/processed/features/
 
@@ -41,8 +45,14 @@ stages:
       - data/processed/features/
     params:
       - params.yaml:
+          - split
+          - xgboost
+          - mlflow
     metrics:
       - reports/metrics.json:
+          cache: false
+    outs:
+      - reports/challenger_run_id.txt:
           cache: false
 
   evaluate:
@@ -51,7 +61,45 @@ stages:
       - src/aqforecast/evaluate.py
       - configs/config.yaml
       - data/processed/features/
+      - reports/challenger_run_id.txt
     metrics:
       - reports/evaluation.json:
+          cache: false
+
+  promote:
+    cmd: python -m aqforecast.promote
+    deps:
+      - src/aqforecast/promote.py
+      - data/processed/features/features.parquet
+      - reports/challenger_run_id.txt
+      - reports/evaluation.json
+    params:
+      - params.yaml:
+          - mlflow
+      - configs/config.yaml:
+          - promotion
+    outs:
+      - reports/promotion_decision.json:
+          cache: false
+
+  monitor:
+    cmd: python -m aqforecast.monitor
+    deps:
+      - src/aqforecast/monitor.py
+      - data/processed/features/features.parquet
+      - reports/promotion_decision.json
+    params:
+      - configs/config.yaml:
+          - monitoring
+    outs:
+      - reports/data_drift.html:
+          cache: false
+      - reports/data_drift.json:
+          cache: false
+      - reports/prediction_drift.html:
+          cache: false
+      - reports/prediction_drift.json:
+          cache: false
+      - reports/live_metrics.json:
           cache: false
 

@@ -10,10 +10,9 @@ respx==0.21.1          # mock httpx calls in tests
 # Linting / formatting / typing
 ruff==0.4.4
 black==24.4.2
-mypy==1.10.0
+mypy==1.14.1
 
 # Type stubs
 pandas-stubs==2.2.2.240514
 types-requests==2.32.0.20240523
 types-PyYAML==6.0.12.20240311
-

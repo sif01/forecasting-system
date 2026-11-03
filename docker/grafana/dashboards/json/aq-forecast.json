@@ -1,0 +1,22 @@
+{
+  "id": null,
+  "uid": "aq-forecast",
+  "title": "Bangalore Air Quality Forecast",
+  "tags": ["aqforecast"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "panels": [
+    {"id": 1, "title": "API request rate", "type": "timeseries", "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}, "targets": [{"expr": "sum(rate(aq_api_requests_total[5m])) by (endpoint)", "legendFormat": "{{endpoint}}"}]},
+    {"id": 2, "title": "Request latency p95", "type": "timeseries", "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}, "targets": [{"expr": "histogram_quantile(0.95, sum(rate(aq_api_request_duration_seconds_bucket[5m])) by (le))", "legendFormat": "p95"}]},
+    {"id": 3, "title": "Forecast PM2.5 distribution", "type": "timeseries", "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}, "targets": [{"expr": "aq_prediction_pm25_count", "legendFormat": "predictions"}]},
+    {"id": 4, "title": "Loaded model version", "type": "stat", "gridPos": {"h": 8, "w": 6, "x": 12, "y": 8}, "targets": [{"expr": "aq_model_version", "legendFormat": "{{version}}"}]},
+    {"id": 5, "title": "Live MAE", "type": "timeseries", "gridPos": {"h": 8, "w": 6, "x": 18, "y": 8}, "targets": [{"expr": "aq_live_mae", "legendFormat": "MAE"}]},
+    {"id": 6, "title": "Drift share", "type": "timeseries", "gridPos": {"h": 8, "w": 6, "x": 0, "y": 16}, "targets": [{"expr": "aq_drift_share", "legendFormat": "drifted features"}]}
+  ],
+  "templating": {"list": []},
+  "time": {"from": "now-24h", "to": "now"},
+  "timepicker": {},
+  "annotations": {"list": []}
+}

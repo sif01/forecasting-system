@@ -1,49 +1,67 @@
-"""
-model_loader.py – Load and cache the champion model from the MLflow registry.
+"""Load the current champion model and expose stable inference metadata."""
 
-Responsibilities:
-  - On startup, fetch the model tagged with alias 'champion' from the
-    configured MLflow Model Registry.
-  - Cache the loaded model in memory so predictions are fast.
-  - Expose a reload() function for the /admin/reload endpoint.
-  - Expose model metadata (version, training date, metrics) for /model-info.
+from __future__ import annotations
 
-Why a separate module: keeps model lifecycle concerns isolated from
-the FastAPI routing layer, and makes the loader easy to stub in tests.
+import os
+from datetime import UTC, datetime
+from typing import Any
 
-Implemented in Phase 4.
-"""
+import mlflow
+import mlflow.pyfunc
+
+from aqforecast.config import load_params
 
 
 class ModelLoader:
-    """Singleton-style loader for the MLflow champion model."""
+    """Small in-memory holder for the currently loaded registry model."""
 
     def __init__(self) -> None:
         self._model = None
         self._version: str | None = None
+        self._run_id: str | None = None
+        self._training_date: str | None = None
+        self._metrics: dict[str, float] = {}
 
     @property
     def is_ready(self) -> bool:
-        """True if a model has been loaded successfully."""
         return self._model is not None
 
+    @property
+    def version(self) -> str | None:
+        return self._version
+
+    @property
+    def metadata(self) -> dict:
+        return {
+            "version": self._version,
+            "training_date": self._training_date,
+            "metrics": self._metrics,
+            "loaded": self.is_ready,
+        }
+
     def load(self) -> None:
-        """Load (or reload) the champion model from the MLflow registry."""
-        raise NotImplementedError("ModelLoader.load() will be implemented in Phase 4.")
+        """Load champion alias, supporting local model paths for offline use."""
+        uri = os.getenv("AQ_MODEL_URI")
+        if uri:
+            self._model = mlflow.pyfunc.load_model(uri)
+            self._version = "local"
+            return
+        name = load_params()["mlflow"]["registered_model_name"]
+        client = mlflow.tracking.MlflowClient()
+        model_version = client.get_model_version_by_alias(name, "champion")
+        self._model = mlflow.pyfunc.load_model(f"models:/{name}@champion")
+        self._version, self._run_id = model_version.version, model_version.run_id
+        run = client.get_run(model_version.run_id)
+        self._training_date = datetime.fromtimestamp(
+            run.info.start_time / 1000, UTC
+        ).isoformat()
+        self._metrics = {key: float(value) for key, value in run.data.metrics.items()}
 
-    def predict(self, features):  # type: ignore[no-untyped-def]
-        """Run inference with the loaded model.
-
-        Args:
-            features: numpy array or pandas DataFrame of shape (1, n_features).
-
-        Returns:
-            float: predicted PM2.5 value.
-        """
-        raise NotImplementedError(
-            "ModelLoader.predict() will be implemented in Phase 4."
-        )
+    def predict(self, features: Any) -> float:
+        model = self._model
+        if model is None:
+            raise RuntimeError("No champion model is loaded")
+        return float(model.predict(features)[0])
 
 
-# Module-level singleton used by the FastAPI app
 model_loader = ModelLoader()

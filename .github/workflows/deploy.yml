@@ -1,16 +1,79 @@
-name: Deploy
+name: Build and Deploy API
 
-# Triggers on merge to main; deploys the API image to the chosen platform.
-# Implemented in Phase 6.
 on:
   push:
     branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
 
 jobs:
-  deploy:
-    name: Build, push, deploy (Phase 6)
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.image.outputs.name }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set image name
+        id: image
+        run: echo "name=ghcr.io/${GITHUB_REPOSITORY,,}:latest" >> "$GITHUB_OUTPUT"
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile.api
+          push: true
+          tags: ${{ steps.image.outputs.name }}
+
+  deploy-render:
+    if: ${{ vars.DEPLOY_TARGET == 'render' }}
+    needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: Placeholder – not yet implemented
-        run: echo "Deploy workflow will be implemented in Phase 6."
+      - name: Trigger Render deploy
+        run: curl --fail --retry 5 --retry-delay 10 -X POST "$RENDER_DEPLOY_HOOK"
+        env:
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+      - name: Smoke test deployed service
+        run: |
+          for attempt in {1..18}; do
+            if curl --fail --silent "$RENDER_URL/health"; then break; fi
+            sleep 10
+          done
+          curl --fail "$RENDER_URL/health"
+          curl --fail -X POST "$RENDER_URL/predict" -H 'Content-Type: application/json' -d '{}'
+        env:
+          RENDER_URL: ${{ secrets.RENDER_URL }}
 
+  deploy-cloud-run:
+    if: ${{ vars.DEPLOY_TARGET == 'cloud-run' }}
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+      - uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ vars.CLOUD_RUN_SERVICE }}
+          region: ${{ vars.CLOUD_RUN_REGION }}
+          image: ${{ needs.build.outputs.image }}
+          env_vars: |
+            MLFLOW_TRACKING_URI=${{ secrets.MLFLOW_TRACKING_URI }}
+            MLFLOW_TRACKING_USERNAME=${{ secrets.DAGSHUB_USERNAME }}
+            MLFLOW_TRACKING_PASSWORD=${{ secrets.DAGSHUB_TOKEN }}
+            AQ_ADMIN_TOKEN=${{ secrets.API_RELOAD_SECRET }}
+      - name: Smoke test deployed service
+        run: |
+          URL="$(gcloud run services describe "$SERVICE" --region "$REGION" --format='value(status.url)')"
+          curl --fail "$URL/health"
+          curl --fail -X POST "$URL/predict" -H 'Content-Type: application/json' -d '{}'
+        env:
+          SERVICE: ${{ vars.CLOUD_RUN_SERVICE }}
+          REGION: ${{ vars.CLOUD_RUN_REGION }}
