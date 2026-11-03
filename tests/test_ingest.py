@@ -68,7 +68,9 @@ def test_malformed_payload_fails_clearly():
         fetch_range("2025-01-01", "2025-01-01")
 
 
-def test_incremental_ingest_backfills_when_raw_data_is_missing(tmp_path, monkeypatch):
+def test_incremental_ingest_backfills_when_raw_data_is_missing(
+    tmp_path, monkeypatch
+):
     monkeypatch.chdir(tmp_path)
     config = {
         "ingestion": {
