@@ -45,7 +45,7 @@ def test_train_logs_metrics_metadata_and_registered_model(tmp_path, monkeypatch)
     monkeypatch.setattr(
         train_module.mlflow,
         "search_model_versions",
-        lambda _: [SimpleNamespace(version="2")],
+        lambda **_: [SimpleNamespace(version="2")],
     )
     monkeypatch.setattr(train_module.mlflow, "MlflowClient", lambda: client)
 
