@@ -103,6 +103,9 @@ def ingest(
     """Download backfill or recent incremental range and deduplicate persisted rows."""
     cfg = config or load_config()
     now = end or datetime.now(UTC)
+    if mode == "incremental" and not list(Path("data/raw").glob("*.parquet")):
+        # A fresh clone has no history to append to, so initialize a usable training window.
+        mode = "backfill"
     days = (
         cfg["ingestion"]["backfill_days"]
         if mode == "backfill"

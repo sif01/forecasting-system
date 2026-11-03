@@ -1,11 +1,13 @@
 """Open-Meteo response parsing and retry behavior."""
 
+from datetime import UTC, datetime
 from unittest.mock import Mock, patch
 
+import pandas as pd
 import pytest
 import requests
 
-from aqforecast.ingest import _fetch, fetch_range
+from aqforecast.ingest import _fetch, fetch_range, ingest
 
 
 def test_fetch_range_joins_hourly_series():
@@ -64,3 +66,24 @@ def test_malformed_payload_fails_clearly():
         pytest.raises(ValueError, match="hourly.time"),
     ):
         fetch_range("2025-01-01", "2025-01-01")
+
+
+def test_incremental_ingest_backfills_when_raw_data_is_missing(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    config = {
+        "ingestion": {
+            "backfill_days": 180,
+            "incremental_days": 3,
+            "archive_lag_days": 5,
+        }
+    }
+    fetch = Mock(return_value=pd.DataFrame({"timestamp": ["2025-11-25"]}))
+    monkeypatch.setattr("aqforecast.ingest.fetch_range", fetch)
+
+    ingest("incremental", config=config, end=datetime(2025, 12, 1, tzinfo=UTC))
+
+    start, finish, _ = fetch.call_args.args
+    elapsed_days = (
+        datetime.fromisoformat(finish) - datetime.fromisoformat(start)
+    ).days
+    assert elapsed_days == 180

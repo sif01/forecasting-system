@@ -14,17 +14,14 @@ source .venv/bin/activate
 dvc remote modify origin --local access_key_id "$DAGSHUB_TOKEN"
 dvc remote modify origin --local secret_access_key "$DAGSHUB_TOKEN"
 
-# 3. Pull latest data pointers from DVC remote
-dvc pull
+# 3. Restore tracked data when this checkout has a DVC lock file
+if [ -f dvc.lock ]; then dvc pull; fi
 
-# 4. Run incremental ingest (last 3 days)
-python -m aqforecast.ingest --mode incremental
-
-# 5. Run the full pipeline (validate → features → train → evaluate → promote → monitor)
+# 4. Run the full pipeline (ingest → validate → features → train → evaluate → promote → monitor)
 dvc repro
 ```
 
-For a first dataset, use `python -m aqforecast.ingest --mode backfill` before `dvc repro`. Set `MLFLOW_TRACKING_URI`, `MLFLOW_TRACKING_USERNAME`, and `MLFLOW_TRACKING_PASSWORD` in the environment to use hosted MLflow. The default tracking store is local.
+On a fresh clone with no raw Parquet data, the pipeline's incremental ingest stage automatically performs the initial backfill. `dvc repro` invokes that stage directly, so a separate manual ingest is unnecessary. Set `MLFLOW_TRACKING_URI`, `MLFLOW_TRACKING_USERNAME`, and `MLFLOW_TRACKING_PASSWORD` in the environment to use hosted MLflow. The default tracking store is local.
 
 ---
 
